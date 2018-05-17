@@ -1,3 +1,5 @@
+All the Python notebooks are fairly straightforward and well documented.
+
 # Learning Word Representations
 
 ## Requirements
