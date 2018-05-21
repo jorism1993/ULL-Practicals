@@ -1,3 +1,5 @@
 *.WORDS
 *.words
 2/europarl/*
+
+3/SentEval
