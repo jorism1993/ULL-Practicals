@@ -3,3 +3,7 @@
 2/europarl/*
 
 3/SentEval
+*.pickle
+
+3/.ipynb_checkpoints
+3/__pycache__
