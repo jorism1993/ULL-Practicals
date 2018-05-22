@@ -4,3 +4,6 @@
 
 3/SentEval
 3/dgm4nlp
+*.pickle
+3/.ipynb_checkpoints
+3/__pycache__
