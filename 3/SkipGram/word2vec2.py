@@ -21,11 +21,11 @@ from model import skipgram
 
 
 class word2vec:
-	def __init__(self, inputfile, vocabulary_size=100000, embedding_dim=300, epoch_num=50, batch_size=16, windows_size=2,neg_sample_num=10):
-		self.op = Options(inputfile, vocabulary_size)
+	def __init__(self, inputfile, vocabulary_size = 10000000, embedding_dim=300, epoch_num=50, batch_size=16, windows_size=2,neg_sample_num=10):
+		self.op = Options(inputfile,vocabulary_size)
+		self.vocabulary_size = self.op.vocabulary_size
 		self.embedding_dim = embedding_dim
 		self.windows_size = windows_size
-		self.vocabulary_size = vocabulary_size
 		self.batch_size = batch_size
 		self.epoch_num = epoch_num
 		self.neg_sample_num = neg_sample_num
@@ -69,6 +69,7 @@ class word2vec:
 				
 			self.save_embedding(model,self.op.i2w,self.op.w2i)
 			print ('Epoch',epoch,'took',time.time()-start,'seconds')
+		model.save_embeddings('SG/skipgram.txt',self.op.i2w)
 		print("Optimization Finished!")
 		
 	def save_embedding(self, model,idx2word=None, word2idx=None):
@@ -101,5 +102,5 @@ class word2vec:
 			pickle.dump(word2embedW2,f)
   
 if __name__ == '__main__':
-	wc= word2vec('training.en',epoch_num=10)
+	wc= word2vec('training.en',epoch_num=30)
 	wc.train()
