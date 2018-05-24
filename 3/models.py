@@ -12,7 +12,7 @@ import torch
 from torch.autograd import Variable
 import torch.nn as nn
 
-
+import copy
 """
 InferSent encoder
 """
@@ -74,6 +74,9 @@ class BLSTMEncoder(nn.Module):
     def set_glove_path(self, glove_path):
         self.glove_path = glove_path
 
+    def set_skipgram_path(self,skipgram_path):
+        self.skipgram_path = skipgram_path
+
     def get_word_dict(self, sentences, tokenize=True):
         # create vocab of words
         word_dict = {}
@@ -121,7 +124,6 @@ class BLSTMEncoder(nn.Module):
 
                 if k > K and all([w in word_vec for w in ['<s>', '</s>']]):
                     break
-        print (len(word_vec))
         return word_vec
 
     def build_vocab(self, sentences, tokenize=True):
@@ -136,7 +138,7 @@ class BLSTMEncoder(nn.Module):
         assert hasattr(self, 'glove_path'), 'warning : you need \
                                              to set_glove_path(glove_path)'
         self.word_vec = self.get_glove_k(K)
-        print('Vocab size : {0}'.format(K))
+        print('Vocab size : {0}'.format(len(self.word_vec)))
 
     def update_vocab(self, sentences, tokenize=True):
         assert hasattr(self, 'glove_path'), 'warning : you need \
@@ -226,14 +228,20 @@ class BLSTMEncoder(nn.Module):
         if tokenize:
             from nltk.tokenize import word_tokenize
 
-        sent = sent.split() if not tokenize else word_tokenize(sent)
-        sent = [['<s>'] + [word for word in sent if word in self.word_vec] +
-                ['</s>']]
+        old_sent = copy.copy(sent)
 
-        if ' '.join(sent[0]) == '<s> </s>':
+        if old_sent in [''," ",""]:
+            return None,None, [100]
+
+        sent = sent.split() if not tokenize else word_tokenize(sent)
+
+        sent = [[word.lower() if word.lower() in self.word_vec else 'UNK' for word in sent]]  
+
+        if len(sent[0]) == 0:
             import warnings
             warnings.warn('No words in "{0}" have glove vectors. Replacing \
                            by "<s> </s>"..'.format(sent))
+         
         batch = Variable(self.get_batch(sent), volatile=True)
 
         if self.is_cuda():
