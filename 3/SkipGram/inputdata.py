@@ -12,6 +12,7 @@ import nltk
 from nltk.corpus import stopwords
 nltk.download('stopwords')
 import string
+import pickle
 
 data_index = 0
 
@@ -21,48 +22,56 @@ class Options(object):
 		self.save_path = "tmp"
 		self.vocabulary = self.read_data(datafile)
 		data_or, self.count, self.vocab_words,self.words_vocab = self.build_dataset(self.vocabulary,
-                                                              self.vocabulary_size) 
+                                                              self.vocabulary_size)
 		self.train_data = self.subsampling(data_or)
-    #s
+
 		self.w2i = self.words_vocab
 		self.i2w= self.vocab_words
 
 		self.sample_table = self.init_sample_table()
 
 		self.save_vocab()
-		
+
 		self.vocabulary_size = len(self.i2w)
 		print ('self.vocabularysize is',self.vocabulary_size)
 
 	def read_data(self,filename):
-		stopWords = set(stopwords.words('english'))
+
+		# We want the same, or a subset of, the EA vocab
+		EA_vocab = list(pickle.load(open('europarl_vocab.pickle','rb')).keys())
+
+		# stopWords = set(stopwords.words('english'))
 		with open(filename) as f:
 			data = f.read().split()
-			data = [x.lower() for x in data if x not in stopWords]
-			data = list(filter(lambda x: x not in string.punctuation, data))
+			data = [x.lower() if x.lower() in EA_vocab else 'UNK' for x in data ]
+			# data = list(filter(lambda x: x not in string.punctuation, data))
+		print ('Done making the corpus')
 		return data
 
 	def build_dataset(self,words, n_words):
 		"""Process raw inputs into a ."""
-		count = [['UNK', -1]]
-		count.extend(collections.Counter(words).most_common(n_words - 1))
+		#count = [['UNK', -1]]
+		#count.extend(collections.Counter(words).most_common())
+		count = collections.Counter(words).most_common()
+
 		dictionary = dict()
+
 		for word, _ in count:
 			dictionary[word] = len(dictionary)
-			
+
 		data = list()
 		unk_count = 0
-		
+
 		for word in words:
 			if word in dictionary:
 				index = dictionary[word]
 			else:
 				index = 0  # dictionary['UNK']
 				unk_count += 1
-				
+
 			data.append(index)
-			
-		count[0][1] = unk_count
+
+		#count[0][1] = unk_count
 		reversed_dictionary = dict(zip(dictionary.values(), dictionary.keys()))
 		#print (dictionary)
 		#print (reversed_dictionary)
@@ -72,7 +81,7 @@ class Options(object):
 		with open(os.path.join(self.save_path, "vocab.txt"), "w") as f:
 			for i in xrange(len(self.count)):
 				vocab_word = self.vocab_words[i]
-				f.write("%s %d\n" % (vocab_word, self.count[i][1])) 
+				f.write("%s %d\n" % (vocab_word, self.count[i][1]))
 
 	def init_sample_table(self):
 		count = [ele[1] for ele in self.count]
@@ -85,25 +94,25 @@ class Options(object):
 		for idx, x in enumerate(count):
 			sample_table += [idx]*int(x)
 		return np.array(sample_table)
-	
+
 	def weight_table(self):
 		count = [ele[1] for ele in self.count]
 		pow_frequency = np.array(count)**0.75
 		power = sum(pow_frequency)
 		ratio = pow_frequency/ power
 		return np.array(ratio)
-	
+
 	def subsampling(self,data):
 		count = [ele[1] for ele in self.count]
 		frequency = np.array(count)/sum(count)
 		P = dict()
-		
+
 		for idx, x in enumerate(frequency):
 			y = (math.sqrt(x/0.001)+1)*0.001/x
 			P[idx] = y
-			
+
 		subsampled_data = list()
-		
+
 		for word in data:
 			if random.random()<P[word]:
 				subsampled_data.append(word)
@@ -116,20 +125,20 @@ class Options(object):
 		labels = np.ndarray(shape=(batch_size, 2 * skip_window), dtype=np.int64)
 		span = 2 * skip_window + 1  # [ skip_window target skip_window ]
 		buffer = collections.deque(maxlen=span)
-    
+
 		if data_index + span > len(data):
 			data_index = 0
-			
+
 		buffer.extend(data[data_index:data_index + span])
 		data_index += span
-		
+
 		for i in range(batch_size):
 			batch[i] = buffer[skip_window]
 			targets = [x for x in range(skip_window)]+[x for x in range(skip_window+1,span)]
-			
+
 			for idj, j in enumerate(targets):
 				labels[i,idj] = buffer[j]
-				
+
 			if data_index == len(data):
 				buffer.extend(data[:span])
 				data_index = span
@@ -137,7 +146,7 @@ class Options(object):
 			else:
 				buffer.append(data[data_index])
 				data_index += 1
-				
+
 	# Backtrack a little bit to avoid skipping words in the end of a batch
 		data_index = (data_index + len(data) - span) % len(data)
 		return batch, labels
@@ -149,10 +158,10 @@ class Options(object):
 		context = np.ndarray(shape=(batch_size,2 * window_size), dtype=np.int64)
 		labels = np.ndarray(shape=(batch_size), dtype=np.int64)
 		pos_pair = []
-    
+
 		if data_index + span > len(data):
 			data_index = 0
-			self.process = False  
+			self.process = False
 		buffer = data[data_index:data_index + span]
 		pos_u = []
 		pos_v = []
@@ -171,7 +180,7 @@ class Options(object):
 			for j in range(span-1):
 				pos_u.append(labels[i])
 				pos_v.append(context[i,j])
-				
+
 		neg_v = np.random.choice(self.sample_table, size=(batch_size*2*window_size,count))
 		return np.array(pos_u), np.array(pos_v), neg_v
 
@@ -233,10 +242,10 @@ def scorefunction(embed):
 		humansim = []
 		for line in lines:
 			eles = line.strip().split()
-			
+
 			if (eles[0] not in wordindex) or (eles[1] not in wordindex):
 				continue
-			
+
 			word1 = int(wordindex[eles[0]])
 			word2 = int(wordindex[eles[1]])
 			humansim.append(float(eles[2]))
