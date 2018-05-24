@@ -7,3 +7,5 @@
 *.pickle
 3/.ipynb_checkpoints
 3/__pycache__
+
+*.txt

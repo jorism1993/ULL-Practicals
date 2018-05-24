@@ -41,7 +41,7 @@ def find_closest_word(word,word2embs,n=10):
         closest_words.append((w,distance))
         
     # Sort the list and reverse for high to low
-    return sorted(closest_words,key=operator.itemgetter(1),reverse=True)
+    return sorted(closest_words,key=operator.itemgetter(1),reverse=True)[0:n]
 
-word = find_closest_word('canada',word2embs_W1)
+word = find_closest_word('italy',word2embs_W1)
 print (word)

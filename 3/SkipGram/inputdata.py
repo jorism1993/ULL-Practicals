@@ -30,6 +30,9 @@ class Options(object):
 		self.sample_table = self.init_sample_table()
 
 		self.save_vocab()
+		
+		self.vocabulary_size = len(self.i2w)
+		print ('self.vocabularysize is',self.vocabulary_size)
 
 	def read_data(self,filename):
 		stopWords = set(stopwords.words('english'))
