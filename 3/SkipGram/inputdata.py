@@ -38,12 +38,12 @@ class Options(object):
 	def read_data(self,filename):
 
 		# We want the same, or a subset of, the EA vocab
-		EA_vocab = list(pickle.load(open('europarl_vocab.pickle','rb')).keys())
+		# EA_vocab = list(pickle.load(open('europarl_vocab.pickle','rb')).keys())
 
 		# stopWords = set(stopwords.words('english'))
 		with open(filename) as f:
 			data = f.read().split()
-			data = [x.lower() if x.lower() in EA_vocab else 'UNK' for x in data ]
+			data = [x.lower() for x in data ]
 			# data = list(filter(lambda x: x not in string.punctuation, data))
 		print ('Done making the corpus')
 		return data
