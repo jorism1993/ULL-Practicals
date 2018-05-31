@@ -50,9 +50,9 @@ class Options(object):
 
 	def build_dataset(self,words, n_words):
 		"""Process raw inputs into a ."""
-		#count = [['UNK', -1]]
-		#count.extend(collections.Counter(words).most_common())
-		count = collections.Counter(words).most_common()
+		count = [('UNK', 1)]
+		count.extend(collections.Counter(words).most_common())
+		# count = collections.Counter(words).most_common()
 
 		dictionary = dict()
 
@@ -61,6 +61,7 @@ class Options(object):
 
 		data = list()
 		unk_count = 0
+		words.append('UNK')
 
 		for word in words:
 			if word in dictionary:
@@ -73,8 +74,7 @@ class Options(object):
 
 		#count[0][1] = unk_count
 		reversed_dictionary = dict(zip(dictionary.values(), dictionary.keys()))
-		#print (dictionary)
-		#print (reversed_dictionary)
+		print ('Done building dataset')
 		return data, count, reversed_dictionary, dictionary
 
 	def save_vocab(self):
